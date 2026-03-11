@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -14,8 +15,8 @@ const categories = [
 ];
 
 async function main() {
+  // Seed categories
   console.log("Seeding categories...");
-
   for (const category of categories) {
     await prisma.category.upsert({
       where: { slug: category.slug },
@@ -23,8 +24,22 @@ async function main() {
       create: category,
     });
   }
-
   console.log(`Seeded ${categories.length} categories.`);
+
+  // Seed admin user
+  console.log("Seeding admin user...");
+  const hashedPassword = await bcrypt.hash("cookPaddy2002!", 12);
+
+  await prisma.user.upsert({
+    where: { email: "clemauger01@gmail.com" },
+    update: {},
+    create: {
+      email: "clemauger01@gmail.com",
+      name: "Clément",
+      password: hashedPassword,
+    },
+  });
+  console.log("Admin user seeded.");
 }
 
 main()
