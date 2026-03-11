@@ -47,6 +47,7 @@ interface RecipeFormProps {
     ingredients: Ingredient[];
     steps: Step[];
     tags: { tag: { id: string; name: string } }[];
+    images?: { url: string; alt: string | null; order: number }[];
   };
 }
 
