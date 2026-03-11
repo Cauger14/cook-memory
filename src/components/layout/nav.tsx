@@ -9,6 +9,7 @@ import {
   Add01Icon,
   Logout01Icon,
   FavouriteIcon,
+  Settings01Icon,
 } from "hugeicons-react";
 
 const navItems = [
@@ -48,6 +49,18 @@ export function Nav() {
             );
           })}
         </div>
+
+        <Link
+          href="/settings"
+          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+            pathname === "/settings"
+              ? "bg-gray-100 font-medium text-gray-900"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          }`}
+        >
+          <Settings01Icon size={20} />
+          Paramètres
+        </Link>
 
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
