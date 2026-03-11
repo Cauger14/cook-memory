@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { auth } from "@/server/auth";
 
 export async function POST(request: Request) {
-  // Vérifier l'authentification
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -43,19 +41,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // Créer le dossier uploads s'il n'existe pas
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
+  // Upload vers Vercel Blob
+  const blob = await put(`recipes/${Date.now()}-${file.name}`, file, {
+    access: "public",
+  });
 
-  // Générer un nom unique
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const filePath = path.join(uploadDir, uniqueName);
-
-  // Écrire le fichier
-  const bytes = await file.arrayBuffer();
-  await writeFile(filePath, Buffer.from(bytes));
-
-  const url = `/uploads/${uniqueName}`;
-  return NextResponse.json({ url });
+  return NextResponse.json({ url: blob.url });
 }
