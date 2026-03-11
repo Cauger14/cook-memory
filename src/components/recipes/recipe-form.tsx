@@ -20,6 +20,7 @@ import {
   ArrowUp01Icon,
   ArrowDown01Icon,
 } from "hugeicons-react";
+import { ImageUpload } from "@/components/recipes/image-upload";
 
 interface Ingredient {
   name: string;
@@ -85,6 +86,9 @@ export function RecipeForm({ initialData }: RecipeFormProps) {
   const { data: categories } = api.category.getAll.useQuery();
   const { data: tags } = api.tag.getAll.useQuery();
   const utils = api.useUtils();
+  const [imageUrls, setImageUrls] = useState<string[]>(
+  initialData?.images?.map((img) => img.url) ?? [],
+);
 
   const createMutation = api.recipe.create.useMutation({
     onSuccess: async () => {
@@ -184,6 +188,7 @@ export function RecipeForm({ initialData }: RecipeFormProps) {
       ingredients: filteredIngredients,
       steps: filteredSteps,
       tagIds: selectedTagIds,
+      imageUrls,
     };
 
     if (isEditing && initialData) {
@@ -423,6 +428,12 @@ export function RecipeForm({ initialData }: RecipeFormProps) {
         <Button type="button" variant="outline" size="sm" onClick={addStep}>
           <Add01Icon size={16} className="mr-1" /> Ajouter une étape
         </Button>
+      </div>
+
+      {/* ── Photos ── */}
+      <div className="space-y-2">
+        <Label>Photos</Label>
+        <ImageUpload images={imageUrls} onChange={setImageUrls} />
       </div>
 
       {/* ── Actions ── */}

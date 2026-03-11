@@ -26,6 +26,7 @@ const createRecipeSchema = z.object({
   ingredients: z.array(ingredientSchema).default([]),
   steps: z.array(stepSchema).default([]),
   tagIds: z.array(z.string()).default([]),
+  imageUrls: z.array(z.string()).default([]),
 });
 
 const updateRecipeSchema = createRecipeSchema.partial().extend({
@@ -118,20 +119,20 @@ export const recipeRouter = createTRPCRouter({
   create: protectedProcedure
     .input(createRecipeSchema)
     .mutation(async ({ ctx, input }) => {
-      const { ingredients, steps, tagIds, ...data } = input;
+      const { ingredients, steps, tagIds, imageUrls, ...data } = input;
 
       return ctx.db.recipe.create({
         data: {
           ...data,
           userId: ctx.session.user.id,
-          ingredients: {
-            create: ingredients,
-          },
-          steps: {
-            create: steps,
-          },
-          tags: {
-            create: tagIds.map((tagId) => ({ tagId })),
+          ingredients: { create: ingredients },
+          steps: { create: steps },
+          tags: { create: tagIds.map((tagId) => ({ tagId })) },
+          images: {
+            create: imageUrls.map((url, index) => ({
+              url,
+              order: index,
+            })),
           },
         },
       });
@@ -141,17 +142,14 @@ export const recipeRouter = createTRPCRouter({
   update: protectedProcedure
     .input(updateRecipeSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, ingredients, steps, tagIds, ...data } = input;
+      const { id, ingredients, steps, tagIds, imageUrls, ...data } = input;
 
-      // Vérifie que la recette appartient à l'utilisateur
       const existing = await ctx.db.recipe.findUnique({
         where: { id, userId: ctx.session.user.id },
       });
       if (!existing) throw new Error("Recette introuvable");
 
-      // Met à jour dans une transaction pour la cohérence
       return ctx.db.$transaction(async (tx) => {
-        // Supprime les anciens ingrédients/steps/tags si fournis
         if (ingredients) {
           await tx.ingredient.deleteMany({ where: { recipeId: id } });
         }
@@ -161,19 +159,26 @@ export const recipeRouter = createTRPCRouter({
         if (tagIds) {
           await tx.recipeTag.deleteMany({ where: { recipeId: id } });
         }
+        if (imageUrls) {
+          await tx.recipeImage.deleteMany({ where: { recipeId: id } });
+        }
 
         return tx.recipe.update({
           where: { id },
           data: {
             ...data,
-            ...(ingredients && {
-              ingredients: { create: ingredients },
-            }),
-            ...(steps && {
-              steps: { create: steps },
-            }),
+            ...(ingredients && { ingredients: { create: ingredients } }),
+            ...(steps && { steps: { create: steps } }),
             ...(tagIds && {
               tags: { create: tagIds.map((tagId) => ({ tagId })) },
+            }),
+            ...(imageUrls && {
+              images: {
+                create: imageUrls.map((url, index) => ({
+                  url,
+                  order: index,
+                })),
+              },
             }),
           },
         });
