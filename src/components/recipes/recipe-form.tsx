@@ -24,8 +24,8 @@ import { ImageUpload } from "@/components/recipes/image-upload";
 
 interface Ingredient {
   name: string;
-  quantity: string;
-  unit: string;
+  quantity: string | null;
+  unit: string | null;
   order: number;
 }
 
@@ -175,7 +175,14 @@ export function RecipeForm({ initialData }: RecipeFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const filteredIngredients = ingredients.filter((ing) => ing.name.trim());
+    const filteredIngredients = ingredients
+      .filter((ing) => ing.name.trim())
+      .map((ing) => ({
+        ...ing,
+        quantity: ing.quantity ?? undefined,
+        unit: ing.unit ?? undefined,
+      }));
+      
     const filteredSteps = steps.filter((step) => step.instruction.trim());
 
     const data = {
@@ -330,7 +337,7 @@ export function RecipeForm({ initialData }: RecipeFormProps) {
           <div key={index} className="flex items-center gap-2">
             <Input
               placeholder="Qté"
-              value={ing.quantity}
+              value={ing.quantity ?? ""}
               onChange={(e) =>
                 updateIngredient(index, "quantity", e.target.value)
               }
@@ -338,7 +345,7 @@ export function RecipeForm({ initialData }: RecipeFormProps) {
             />
             <Input
               placeholder="Unité"
-              value={ing.unit}
+              value={ing.unit ?? ""}
               onChange={(e) => updateIngredient(index, "unit", e.target.value)}
               className="w-20"
             />
